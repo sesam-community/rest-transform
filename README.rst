@@ -2,27 +2,45 @@
 sesam-rest-transform
 ====================
 
-Microservice that calls a REST service (with optional payload) and stores the result in a configurable property.
+Microservice that calls a URL (with optional payload) and able to store the result in a configurable property.
 
 .. image:: https://travis-ci.org/sesam-community/rest-transform.svg?branch=master
     :target: https://travis-ci.org/sesam-community/rest-transform
 
+
+* can be used as sink or transform
+* entity level customization
+* results are streamed back which can be opted out.
 * Listens on port 5001 by default
-* results are streamed back
+
+Query Parameters
+######################
+
+.. csv-table::
+   :header: "NAME","DESCRIPTION"
+
+   "service_config_property", "the property that serves for the entity specific execution parameters"
+   "path", "the path for the endpoint on the target url"
+
+service_config_property, if specified must be a dict with any of following properties:
+URL, METHOD, HEADERS, PROPERTY
+refer to "Environment Parameters" section for their explanations
 
 Environment Parameters
 ######################
 
 .. csv-table::
-   :header: "CONFIG_NAME","DESCRIPTION","IS_REQUIRED","DEFAULT_VALUE"
+  :header: "CONFIG_NAME","DESCRIPTION","IS_REQUIRED","DEFAULT_VALUE"
 
-   "LOG_LEVEL", "Logging level.", "no", "INFO"
-   "PORT", "the port that the service will run on", "no", "5001"
-   "PROPERTY", "the property that will contain the transformation result", "no", "response"
-   "URL", "the url of the system that will provide transformed data", "yes", "n/a"
-   "HEADERS", "headers in json format for the URL", "no", "n/a"
-   "AUTHORIZATION", "auth config for the requests to the URL. see below for the valid structure templates", "no", "5000"
-   "DO_STREAM", "Flag to receive responses from this service streamed or not. Streaming will be faster but will always return 200", "no", "true"
+  "LOG_LEVEL", "Logging level.", "no", "INFO"
+  "PORT", "the port that the service will run on", "no", "5001"
+  "PROPERTY", "the property that will contain the transformation result", "no", "response"
+  "PAYLOAD_PROPERTY_FOR_TRANSFORM_REQUEST", "the property that will contain the payload to be sent to URL", "no", "payload"
+  "URL", "the url of the system that will provide transformed data", "yes", "n/a"
+  "HEADERS", "headers in json format for the URL", "no", "n/a"
+  "AUTHORIZATION", "auth config for the requests to the URL. see below for the valid structure templates", "no", "5000"
+  "DO_STREAM", "Flag to receive responses from this service streamed or not. Streaming will be faster but will always return 200", "no", "true"
+  "DO_VERIFY_SSL", "Flag to enable/disable ssl verification", "no", "false"
 
 AUTHORIZATION, if specified, can have following structures
 
