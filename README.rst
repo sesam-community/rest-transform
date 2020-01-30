@@ -10,7 +10,7 @@ Microservice that calls a URL (with optional payload) and able to store the resu
 
 * can be used as sink or transform
 * entity level customization
-* results are streamed back which can be opted out.
+* transform results are streamed back (optional to disable/enable).
 * Listens on port 5001 by default
 
 Query Parameters

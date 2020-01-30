@@ -8,6 +8,7 @@ import requests
 import datetime
 from jinja2 import Template
 from sesamutils import sesam_logger
+from sesamutils.flask import serve
 
 app = Flask(__name__)
 
@@ -82,13 +83,13 @@ def receiver():
     service_config_property = request.args.get("service_config_property", "service_config")
     path = request.args.get("path", "")
 
-    def generate(entities):
+    def generate(entities, endpoint):
         yield "["
         with session_factory.make_session() as s:
             for index, entity in enumerate(entities):
                 if index > 0:
                     yield ","
-                url_template_per_entity, method_per_entity, headers_in_effect, prop_per_entity = url, method, headers, prop
+                url_per_entity, method_per_entity, headers_per_entity, prop_per_entity = url, method, headers, prop
                 if entity.get(service_config_property):
                     _transform_config = entity.get(service_config_property)
                     url_per_entity = _transform_config.get("URL", url) + path
@@ -100,12 +101,12 @@ def receiver():
 
                 resp = s.request(method_per_entity, rendered_url, json=entity.get(payload_property),headers=headers_per_entity)
                 logger.debug(f'transform of entity with _id={entity.get("_id","?")}, prop_per_entity={prop_per_entity} received {resp.status_code}-{resp.text} from {rendered_url}')
-                if request.endpoint == 'transform':
+                if endpoint == 'transform':
                     if resp.ok:
                         entity[prop_per_entity] = resp.json()
                     else:
                         entity[prop_per_entity] = f'{resp.status_code} - {resp.text}'
-                elif request.endpoint == 'sink':
+                elif endpoint == 'sink':
                     if not resp.ok:
                         abort(resp.status_code, resp.text)
                 yield json.dumps(entity)
@@ -113,7 +114,7 @@ def receiver():
 
     # get entities from request
     entities = request.get_json()
-    response_data_generator = generate(entities)
+    response_data_generator = generate(entities, request.endpoint)
     response_data = []
     if do_stream and request.endpoint != 'sink':
         response_data = response_data_generator
@@ -124,4 +125,4 @@ def receiver():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=PORT)
+    serve(app, port=PORT)
