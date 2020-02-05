@@ -10,7 +10,7 @@ Microservice that calls a URL (with optional payload) and able to store the resu
 
 * can be used as sink or transform
 * entity level customization
-* transform results are streamed back (optional to disable/enable).
+* transform results are streamed back by default and streaming can be turned off.
 * Listens on port 5001 by default
 
 Query Parameters
@@ -23,7 +23,7 @@ Query Parameters
    "path", "the path for the endpoint on the target url"
 
 service_config_property, if specified must be a dict with any of following properties:
-URL, METHOD, HEADERS, PROPERTY
+URL, METHOD, HEADERS, PROPERTY.
 refer to "Environment Parameters" section for their explanations
 
 Environment Parameters
