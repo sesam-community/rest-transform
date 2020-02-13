@@ -133,7 +133,7 @@ Examples:
 
 ::
 
-   $ curl -s -XPOST 'http://localhost:5001/transform' -H "Content-type: application/json" -d '[{ "_id": "jane", "name": "Jane Doe" }]' ", " jq -S .
+   $ curl -s -XPOST 'http://localhost:5001/transform' -H "Content-type: application/json" -d '[{ "_id": "jane", "name": "Jane Doe" }]' | jq -S .
    [
      {
        "_id": "jane",
@@ -144,7 +144,7 @@ Examples:
 
 ::
 
-   $ curl -s -XPOST 'http://localhost:5001/transform' -H "Content-type: application/json" -d @sample.json ", "jq -S .
+   $ curl -s -XPOST 'http://localhost:5001/transform' -H "Content-type: application/json" -d @sample.json |jq -S .
    [
      {
        "_id": "jane",
