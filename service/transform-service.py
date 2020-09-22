@@ -26,6 +26,7 @@ authorization = os.environ.get("AUTHORIZATION")
 do_stream = os.environ.get("DO_STREAM", "true").lower() == "true"
 do_verify_ssl = os.environ.get("DO_VERIFY_SSL", "false").lower() == "true"
 tolerable_status_codes = os.environ.get("TOLERABLE_STATUS_CODES")
+service_config_property = os.environ.get("SERVICE_CONFIG_PROPERTY", "service_config")
 
 print(f"starting with {url}, do_stream={do_stream}, prop={prop}, tolerable_status_codes='{tolerable_status_codes}'")
 
@@ -82,7 +83,7 @@ else:
 @app.route("/sink", methods=["POST"], endpoint='sink')
 def receiver():
 
-    service_config_property = request.args.get("service_config_property", "service_config")
+    service_config_property = request.args.get("service_config_property", service_config_property)
     path = request.args.get("path", "")
 
     def generate(entities, endpoint):
@@ -91,7 +92,7 @@ def receiver():
             for index, entity in enumerate(entities):
                 if index > 0:
                     yield ","
-                url_per_entity, method_per_entity, headers_per_entity, prop_per_entity, tolerable_status_codes_per_entity = url, method, headers, prop, tolerable_status_codes
+                url_per_entity, method_per_entity, headers_per_entity, prop_per_entity, tolerable_status_codes_per_entity, payload_property_per_entity = url, method, headers, prop, tolerable_status_codes, payload_property
                 if entity.get(service_config_property):
                     _transform_config = entity.get(service_config_property)
                     url_per_entity = _transform_config.get("URL", url) + path
@@ -99,6 +100,7 @@ def receiver():
                     headers_per_entity = copy.deepcopy(_transform_config.get("HEADERS"))
                     prop_per_entity = _transform_config.get("PROPERTY", prop_per_entity)
                     tolerable_status_codes_per_entity = _transform_config.get("TOLERABLE_STATUS_CODES", tolerable_status_codes_per_entity)
+                    payload_property_per_entity = _transform_config.get("PAYLOAD_PROPERTY_FOR_TRANSFORM_REQUEST", payload_property_per_entity)
                 url_template_per_entity = Template(url_per_entity)
                 rendered_url = url_template_per_entity.render(entity=entity)
 
@@ -107,7 +109,7 @@ def receiver():
                 '''
                 transform_result = {}
                 try:
-                    resp = s.request(method_per_entity, rendered_url, json=entity.get(payload_property),headers=headers_per_entity)
+                    resp = s.request(method_per_entity, rendered_url, json=entity.get(payload_property_per_entity),headers=headers_per_entity)
                 except Exception as er:
                     transform_result = {"status_code": 500, "return_value": {"transform_succeeded": False, "message": str(er), "status_code": 500}}
                 else:
