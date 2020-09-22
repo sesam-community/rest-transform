@@ -9,6 +9,7 @@ import datetime
 from jinja2 import Template
 from sesamutils import sesam_logger
 from sesamutils.flask import serve
+import re
 
 app = Flask(__name__)
 
@@ -24,8 +25,9 @@ headers = json.loads(os.environ.get("HEADERS", "{}"))
 authorization = os.environ.get("AUTHORIZATION")
 do_stream = os.environ.get("DO_STREAM", "true").lower() == "true"
 do_verify_ssl = os.environ.get("DO_VERIFY_SSL", "false").lower() == "true"
+tolerable_status_codes = os.environ.get("TOLERABLE_STATUS_CODES")
 
-print(f"starting with {url}, do_stream={do_stream}, prop={prop}")
+print(f"starting with {url}, do_stream={do_stream}, prop={prop}, tolerable_status_codes='{tolerable_status_codes}'")
 
 session_factory = None
 
@@ -89,26 +91,40 @@ def receiver():
             for index, entity in enumerate(entities):
                 if index > 0:
                     yield ","
-                url_per_entity, method_per_entity, headers_per_entity, prop_per_entity = url, method, headers, prop
+                url_per_entity, method_per_entity, headers_per_entity, prop_per_entity, tolerable_status_codes_per_entity = url, method, headers, prop, tolerable_status_codes
                 if entity.get(service_config_property):
                     _transform_config = entity.get(service_config_property)
                     url_per_entity = _transform_config.get("URL", url) + path
                     method_per_entity = _transform_config.get("METHOD", method_per_entity)
                     headers_per_entity = copy.deepcopy(_transform_config.get("HEADERS"))
                     prop_per_entity = _transform_config.get("PROPERTY", prop_per_entity)
+                    tolerable_status_codes_per_entity = _transform_config.get("TOLERABLE_STATUS_CODES", tolerable_status_codes_per_entity)
                 url_template_per_entity = Template(url_per_entity)
                 rendered_url = url_template_per_entity.render(entity=entity)
 
-                resp = s.request(method_per_entity, rendered_url, json=entity.get(payload_property),headers=headers_per_entity)
-                logger.debug(f'transform of entity with _id={entity.get("_id","?")}, prop_per_entity={prop_per_entity} received {resp.status_code}-{resp.text} from {rendered_url}')
-                if endpoint == 'transform':
+                '''construct the response dict even if errors occur so that it can be handled in dtl.
+                   tolerate errors as per configuration
+                '''
+                transform_result = {}
+                try:
+                    resp = s.request(method_per_entity, rendered_url, json=entity.get(payload_property),headers=headers_per_entity)
+                except Exception as er:
+                    transform_result = {"status_code": 500, "return_value": {"transform_succeeded": False, "message": str(er), "status_code": 500}}
+                else:
                     if resp.ok:
-                        entity[prop_per_entity] = resp.json()
+                        transform_result = {"status_code": resp.status_code, "return_value": resp.json()}
                     else:
-                        entity[prop_per_entity] = f'{resp.status_code} - {resp.text}'
+                        transform_result = {"status_code": resp.status_code, "return_value": {"transform_succeeded": resp.ok, "message": resp.text, "status_code": resp.status_code}}
+
+                logger.debug(f'transform of entity with _id={entity.get("_id","?")}, prop_per_entity={prop_per_entity} received {transform_result} from {rendered_url}')
+                if endpoint == 'transform':
+                    if not ((transform_result.get("status_code") >= 200 and transform_result.get("status_code") < 400)
+                        or (tolerable_status_codes_per_entity
+                        and re.search(tolerable_status_codes_per_entity, str(transform_result.get("status_code"))))):
+                        abort(transform_result.get("status_code"), transform_result.get("return_value"))
+                    entity[prop_per_entity] = transform_result["return_value"]
                 elif endpoint == 'sink':
-                    if not resp.ok:
-                        abort(resp.status_code, resp.text)
+                    resp.raise_for_status()
                 yield json.dumps(entity)
         yield "]"
 
