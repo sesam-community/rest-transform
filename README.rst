@@ -31,7 +31,7 @@ Query Parameters
    "service_config_property", "the property in the entity that serves for the entity specific execution parameters. Overrules the corresponding env var."
    "path", "the path for the endpoint on the target url. The value is appended to the URL to reveal the final URL"
 
-service_config_property, if specified must be a dict where keys are subset of environment variables.
+service_config_property, if specified must point to a dict in the incoming entities. The dict fields must be a subset of environment variables.
 refer to "Environment Parameters" section for their explanations and eligable values.
 
 Environment Parameters
@@ -41,19 +41,19 @@ Environment Parameters
   :header: "CONFIG_NAME","DESCRIPTION","IS_REQUIRED","DEFAULT_VALUE"
 
   "AUTHORIZATION", "auth config for the requests to the URL. see below for the valid structure templates", "no", "5000"
-  "LOG_LEVEL", "Logging level.", "no", "INFO"
+  "LOG_LEVEL", "Logging level.", "no", "'INFO'"
   "PORT", "the port that the service will run on", "no", "5001"
   "DO_STREAM", "Flag to receive responses from this service streamed or not. Streaming will be faster but will always return 200", "no", "true"
   "DO_VERIFY_SSL", "Flag to enable/disable ssl verification", "no", "false"
-  "METHOD *", "http method for the call to URL", "no", "GET"
-  "PROPERTY *", "the property that will contain the transformation result", "no", "response"
-  "PAYLOAD_PROPERTY_FOR_TRANSFORM_REQUEST *", "the property that will contain the payload to be sent to URL", "no", "payload"
+  "METHOD *", "http method for the call to URL", "no", "'GET'"
+  "PROPERTY *", "the property that will contain the transformation result", "no", "'response'"
+  "PAYLOAD_PROPERTY_FOR_TRANSFORM_REQUEST *", "the property that will contain the payload to be sent to URL", "no", "'payload'"
   "URL *", "the url of the system that will provide transformed data", "yes", "n/a"
   "HEADERS *", "headers in json format for the URL", "no", "n/a"
   "TOLERABLE_STATUS_CODES *", "regex pattern to be searched on response code from the URL. If matched, error won't be raised but returned( in the field as specified in ""PROPERTY"" variable) so that pipe won't fail. The response will be in this format: {""transform_succeeded"": true|false, ""message"": ""<error message>"", ""status_code"": <http code for error>}. Applicable to `/transform` endpoint only", "no", "none"
-  "SERVICE_CONFIG_PROPERTY", "the key that points to the service_config_property in the input entities"
+  "SERVICE_CONFIG_PROPERTY", "the key that points to the service_config_property in the input entities", "no", "'service_config'"
 
-*: can be overruled by using service_config_property
+*: can be overruled by utilizing entity level customization via service_config_property envvar/query param.
 
 AUTHORIZATION, if specified, can have following structures
 
