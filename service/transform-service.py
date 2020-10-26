@@ -83,7 +83,7 @@ else:
 @app.route("/sink", methods=["POST"], endpoint='sink')
 def receiver():
 
-    service_config_property = request.args.get("service_config_property", service_config_property)
+    service_config_property_in_effect = request.args.get("service_config_property", service_config_property)
     path = request.args.get("path", "")
 
     def generate(entities, endpoint):
@@ -93,8 +93,8 @@ def receiver():
                 if index > 0:
                     yield ","
                 url_per_entity, method_per_entity, headers_per_entity, prop_per_entity, tolerable_status_codes_per_entity, payload_property_per_entity = url, method, headers, prop, tolerable_status_codes, payload_property
-                if entity.get(service_config_property):
-                    _transform_config = entity.get(service_config_property)
+                if entity.get(service_config_property_in_effect):
+                    _transform_config = entity.get(service_config_property_in_effect)
                     url_per_entity = _transform_config.get("URL", url) + path
                     method_per_entity = _transform_config.get("METHOD", method_per_entity)
                     headers_per_entity = copy.deepcopy(_transform_config.get("HEADERS"))
@@ -120,6 +120,7 @@ def receiver():
 
                 logger.debug(f'transform of entity with _id={entity.get("_id","?")}, prop_per_entity={prop_per_entity} received {transform_result} from {rendered_url}')
                 if endpoint == 'transform':
+                    #if neither error code nor tolerable code abort, otherwise do the expected
                     if not ((transform_result.get("status_code") >= 200 and transform_result.get("status_code") < 400)
                         or (tolerable_status_codes_per_entity
                         and re.search(tolerable_status_codes_per_entity, str(transform_result.get("status_code"))))):
