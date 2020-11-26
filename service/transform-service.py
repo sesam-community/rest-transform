@@ -114,7 +114,12 @@ def receiver():
                     transform_result = {"status_code": 500, "return_value": {"transform_succeeded": False, "message": str(er), "status_code": 500}}
                 else:
                     if resp.ok:
-                        transform_result = {"status_code": resp.status_code, "return_value": resp.json()}
+                        try:
+                            return_value = resp.json()
+                        except ValueError as er:
+                            return_value = resp.text
+                        finally:
+                            transform_result = {"status_code": resp.status_code, "return_value": return_value}
                     else:
                         transform_result = {"status_code": resp.status_code, "return_value": {"transform_succeeded": resp.ok, "message": resp.text, "status_code": resp.status_code}}
 
