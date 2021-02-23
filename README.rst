@@ -4,9 +4,8 @@ sesam-rest-transform
 
 Microservice that calls a URL (with optional payload) and able to store the result in a configurable property.
 
-.. image:: https://travis-ci.org/sesam-community/rest-transform.svg?branch=master
-    :target: https://travis-ci.org/sesam-community/rest-transform
-
+.. image:: https://github.com/sesam-community/rest-transform/actions/workflows/sesam-community-ci-cd.yml/badge.svg
+   :target: https://github.com/sesam-community/rest-transform/actions/workflows/sesam-community-ci-cd.yml
 
 * can be used as sink or transform
 * entity level customization
