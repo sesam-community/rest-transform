@@ -6,7 +6,7 @@ import os
 import copy
 import requests
 import datetime
-from jinja2 import Template
+from jinja2 import Template, Environment, meta
 from sesamutils import sesam_logger
 from sesamutils.flask import serve
 import re
@@ -102,7 +102,17 @@ def receiver():
                     tolerable_status_codes_per_entity = _transform_config.get("TOLERABLE_STATUS_CODES", tolerable_status_codes_per_entity)
                     payload_property_per_entity = _transform_config.get("PAYLOAD_PROPERTY_FOR_TRANSFORM_REQUEST", payload_property_per_entity)
                 url_template_per_entity = Template(url_per_entity)
-                rendered_url = url_template_per_entity.render(entity=entity)
+
+                # At some point rendering was fixed to 'entity' context.
+                # To be backward compatible with redering both with 'entity' context and with no context:
+                #   find_undeclared_variables and check if 'entity' is one and only.
+                #   If so, assume 'entity' context, otherwise, none.
+                env = Environment()
+                ast = env.parse(url_per_entity)
+                if meta.find_undeclared_variables(ast) == {'entity'}:
+                    rendered_url = url_template_per_entity.render(entity=entity)
+                else:
+                    rendered_url = url_template_per_entity.render(entity)
 
                 '''construct the response dict even if errors occur so that it can be handled in dtl.
                    tolerate errors as per configuration
