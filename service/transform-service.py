@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 PORT = int(os.environ.get("PORT", 5001))
 
-logger = sesam_logger("rest-transform-service")
+logger = sesam_logger("rest-transform-service", app=app)
 
 prop = os.environ.get("PROPERTY", "response")
 payload_property = os.environ.get("PAYLOAD_PROPERTY_FOR_TRANSFORM_REQUEST", "payload")
