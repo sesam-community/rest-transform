@@ -1,11 +1,11 @@
 ====================
-sesam-rest-transform
+rest-transform
 ====================
-
-Microservice that calls a URL (with optional payload) and able to store the result in a configurable property.
 
 .. image:: https://github.com/sesam-community/rest-transform/actions/workflows/sesam-community-ci-cd.yml/badge.svg
    :target: https://github.com/sesam-community/rest-transform/actions/workflows/sesam-community-ci-cd.yml
+
+Microservice that calls a URL (with optional payload) and able to store the result in a configurable property.
 
 * can be used as sink or transform
 * entity level customization
@@ -88,9 +88,11 @@ Oauth2:
 
 Example config:
 ########
+
+System:
 ::
 
-    [{
+    {
       "_id": "my-rest-transform-system",
       "type": "system:microservice",
       "docker": {
@@ -99,76 +101,52 @@ Example config:
             "Accept": "application/json; version=2",
             "Authorization": "token my-travis-token"
           },
-          "URL": "https://api.travis-ci.org/settings/env_vars?repository_id={{ repo_id }}",
+          "URL": "https://my_domain/my_script_root{{ _my_full_path_to_my_resource }}",
           "DO_STREAM": false,
-          "PROPERTY": "mytransformfield",
+          "PROPERTY": "mytransformresponse",
           "TOLERABLE_STATUS_CODES": "404|400"
         },
         "image": "sesamcommunity/sesam-rest-transform",
         "port": 5001
       }
+    }
+
+
+Pipe:
+::
+  {
+    "_id": "my-transform-pipe",
+    "type": "pipe",
+    "source": {
+      "type": "dataset",
+      "dataset": "my-source"
     },
-    {
-      "_id": "my-transform-pipe",
-      "type": "pipe",
-      "source": {
-        "type": "dataset",
-        "dataset": "my-source"
-      },
-      "transform": [{
-        "type": "dtl",
-        "rules": {
-          "default": [
-            ["copy", "*"],
-            ["add", "::repo_id", "_S.id"]
+    "transform": [{
+      "type": "dtl",
+      "rules": {
+        "default": [
+          ["copy", "_id"],
+          ["comment", "fields starting with '_' are omitted from the output implicitly ;) "],
+          ["add", "::_my_full_path_to_my_resource",
+            ["concat", "/mypath/to/myresource?myid=", "_S.id"]
           ]
-        }
-      }, {
-        "type": "http",
-        "system": "my-rest-transform-system",
-        "url": "/transform"
-      }, {
-        "type": "dtl",
-        "rules": {
-          "default": [
-            ["add", "details", "_S.response"],
-            ["add", "_id", "_S.name"],
-            ["add", "name", "_S.name"]
+        ]
+      }
+    }, {
+      "type": "http",
+      "system": "my-rest-transform-system",
+      "url": "/transform"
+    }, {
+      "type": "dtl",
+      "rules": {
+        "default": [
+          ["copy", "_id"],
+          ["if",
+            ["eq", "_S.mytransformresponse.transform_succeeded", false],
+            ["comment", "optionally, do the tolerated error handling here, or alternatively in a succeeding pipe"],
+            ["add", "details", "_S.mytransformresponse"]
           ]
-        }
-      }]
+        ]
+      }
     }]
-
-In this case the entities passed to the transform require a p
-
-
-Examples:
-
-::
-
-   $ curl -s -XPOST 'http://localhost:5001/transform' -H "Content-type: application/json" -d '[{ "_id": "jane", "name": "Jane Doe" }]' | jq -S .
-   [
-     {
-       "_id": "jane",
-       "response": "foo-response",
-       "name": "Jane Doe"
-     }
-   ]
-
-::
-
-   $ curl -s -XPOST 'http://localhost:5001/transform' -H "Content-type: application/json" -d @sample.json |jq -S .
-   [
-     {
-       "_id": "jane",
-       "response": "foo-response",
-       "name": "Jane Doe"
-     },
-     {
-       "_id": "john",
-       "response": "foo-response",
-       "name": "John Smith"
-     }
-   ]
-
-Note the example uses `curl <https://curl.haxx.se/>`_ to send the request and `jq <https://stedolan.github.io/jq/>`_ prettify the response.
+  }
