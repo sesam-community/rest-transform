@@ -37,6 +37,8 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          # DOCKER_ORGNAME: define DOCKER_ORGNAME secret to push to organization namespace that DOCKER_USERNAME has access to
+          DOCKER_ORGNAME: ${{ secrets.DOCKER_ORGNAME }}
           # DOCKER_REPO_NAME: uncomment_and_set_to_docker_repo_name_if_different_from_github_repoa_name
         run: bash <(curl -s https://raw.githubusercontent.com/sesam-community/guidelines/master/git_action.sh)
         shell: bash
