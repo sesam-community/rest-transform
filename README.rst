@@ -28,7 +28,7 @@ Query Parameters
    :header: "NAME","DESCRIPTION"
 
    "service_config_property", "the property in the entity that serves for the entity specific execution parameters. Overrules the corresponding env var."
-   "path", "the path for the endpoint on the target url. The value is appended to the URL to reveal the final URL"
+   "path", "the path for the endpoint on the target url. The value is appended to the URL to reveal the final URL. See examples section for usage alternatives."
 
 service_config_property, if specified must point to a dict in the incoming entities. The dict fields must be a subset of environment variables.
 refer to "Environment Parameters" section for their explanations and eligable values.
@@ -101,7 +101,7 @@ System:
             "Accept": "application/json; version=2",
             "Authorization": "token my-travis-token"
           },
-          "URL": "https://my_domain/my_script_root{{ _my_full_path_to_my_resource }}",
+          "URL": "https://my_domain/my_script_root",
           "DO_STREAM": false,
           "PROPERTY": "mytransformresponse",
           "TOLERABLE_STATUS_CODES": "404|400"
@@ -126,16 +126,13 @@ Pipe:
       "rules": {
         "default": [
           ["copy", "_id"],
-          ["comment", "fields starting with '_' are omitted from the output implicitly ;) "],
-          ["add", "::_my_full_path_to_my_resource",
-            ["concat", "/mypath/to/myresource?myid=", "_S.id"]
-          ]
+          ["add", "id", "_S._id"]
         ]
       }
     }, {
       "type": "http",
       "system": "my-rest-transform-system",
-      "url": "/transform"
+      "url": "/transform?path=/mypath/to/myresource?myid={{ id }}"
     }, {
       "type": "dtl",
       "rules": {
@@ -150,3 +147,17 @@ Pipe:
       }
     }]
   }
+  
+  
+
+
+Following combinations are all equivalent for the examplified case:  
+
+
+.. csv-table::
+   :header: "URL (ENVVAR)","PATH(query param)","ENTITY (payload- partially shown)","Comments"
+   
+   https://my_domain/my_script_root, /mypath/to/myresource?myid={{ id }},  ..."id":10... , Most generic usage of the microservice
+   https://my_domain/my_script_root/mypath/to/, myresource?myid={{ id }}, ..."id":10 ..., A less generic usage
+   https://my_domain/my_script_root/mypath/to/myresource?myid={{ id }}, , ..."id":10..., Least generic usage due to rigid URL value
+   https://my_domain/my_script_root/{{ _my_full_path}}, , ..."_my_full_path":"mypath/to/myresource?myid=10"..., "Most generic usage where replacement value is not in the entity"
