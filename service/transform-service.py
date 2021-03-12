@@ -92,7 +92,7 @@ def receiver():
             for index, entity in enumerate(entities):
                 if index > 0:
                     yield ","
-                url_per_entity, method_per_entity, headers_per_entity, prop_per_entity, tolerable_status_codes_per_entity, payload_property_per_entity = url, method, headers, prop, tolerable_status_codes, payload_property
+                url_per_entity, method_per_entity, headers_per_entity, prop_per_entity, tolerable_status_codes_per_entity, payload_property_per_entity = url + path, method, headers, prop, tolerable_status_codes, payload_property
                 if entity.get(service_config_property_in_effect):
                     _transform_config = entity.get(service_config_property_in_effect)
                     url_per_entity = _transform_config.get("URL", url) + path
