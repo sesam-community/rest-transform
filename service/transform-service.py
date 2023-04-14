@@ -86,7 +86,7 @@ def receiver():
     service_config_property_in_effect = request.args.get("service_config_property", service_config_property)
     path = request.args.get("path", "")
 
-    def generate(entities, endpoint):
+    def generate(entities, endpoint, is_json):
         yield "["
         with session_factory.make_session() as s:
             for index, entity in enumerate(entities):
@@ -101,6 +101,10 @@ def receiver():
                     prop_per_entity = _transform_config.get("PROPERTY", prop_per_entity)
                     tolerable_status_codes_per_entity = _transform_config.get("TOLERABLE_STATUS_CODES", tolerable_status_codes_per_entity)
                     payload_property_per_entity = _transform_config.get("PAYLOAD_PROPERTY_FOR_TRANSFORM_REQUEST", payload_property_per_entity)
+    
+                for k in headers_per_entity.keys():
+                    if k.lower() in ["mime-type","content-type"]:
+                        is_json = re.search("application/(.*\+)?json", headers_per_entity.get(k).lower())
                 url_template_per_entity = Template(url_per_entity)
 
                 # At some point rendering was fixed to 'entity' context.
@@ -119,7 +123,12 @@ def receiver():
                 '''
                 transform_result = {}
                 try:
-                    resp = s.request(method_per_entity, rendered_url, json=entity.get(payload_property_per_entity),headers=headers_per_entity)
+                    logger.debug(str(is_json))
+                    if is_json:
+                        resp = s.request(method_per_entity, rendered_url, json=entity.get(payload_property_per_entity),headers=headers_per_entity)
+                    else:
+                        resp = s.request(method_per_entity, rendered_url, data=entity.get(payload_property_per_entity),headers=headers_per_entity)
+                    
                 except Exception as er:
                     transform_result = {"status_code": 500, "return_value": {"transform_succeeded": False, "message": str(er), "status_code": 500}}
                 else:
@@ -148,7 +157,7 @@ def receiver():
 
     # get entities from request
     entities = request.get_json()
-    response_data_generator = generate(entities, request.endpoint)
+    response_data_generator = generate(entities, request.endpoint, request.is_json)
     response_data = []
     if do_stream and request.endpoint != 'sink':
         response_data = response_data_generator
