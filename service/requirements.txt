@@ -1,5 +1,5 @@
 Flask==1.1.1
-requests==2.22.0
+requests==2.31.0
 Jinja2==2.11.3
 requests_oauthlib==1.2.0
 sesamutils==0.1.10
