@@ -104,7 +104,7 @@ def receiver():
     
                 for k in headers_per_entity.keys():
                     if k.lower() in ["mime-type","content-type"]:
-                        is_json = re.search("application/(.*\+)?json", headers_per_entity.get(k).lower())
+                        is_json = re.search("application/(.*\\+)?json", headers_per_entity.get(k).lower())
                 url_template_per_entity = Template(url_per_entity)
 
                 # At some point rendering was fixed to 'entity' context.
@@ -123,7 +123,6 @@ def receiver():
                 '''
                 transform_result = {}
                 try:
-                    logger.debug(str(is_json))
                     if is_json:
                         resp = s.request(method_per_entity, rendered_url, json=entity.get(payload_property_per_entity),headers=headers_per_entity)
                     else:

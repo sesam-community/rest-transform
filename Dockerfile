@@ -1,4 +1,4 @@
-FROM python:3-alpine
+FROM python:3.10-alpine
 MAINTAINER Baard H. Rehn Johansen "baard@rehn.no"
 ARG BuildNumber=unknown
 LABEL BuildNumber $BuildNumber
@@ -8,8 +8,8 @@ LABEL Commit $Commit
 COPY ./service /service
 
 WORKDIR /service
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip3 install --upgrade pip
+RUN pip3 install -r requirements.txt
 
 EXPOSE 5000/tcp
 CMD ["python3", "-u", "transform-service.py"]
